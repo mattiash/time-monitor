@@ -6,11 +6,21 @@ Runs [chrony](https://chrony-project.org/) in tracking-only mode (`-x`) so it me
 
 ## Usage
 
+### Interactive
+
 ```bash
-docker run --rm --init ghcr.io/mattiash/time-monitor
+docker run --rm --init -it ghcr.io/mattiash/time-monitor
 ```
 
-`--init` is required for the container to exit cleanly on Ctrl-C. It uses Docker's bundled init process (tini) as PID 1, which ensures signals are forwarded correctly.
+`-it` allocates a TTY so that Ctrl-C is delivered through the PTY driver directly to the container. `--init` adds tini as PID 1 for clean process reaping.
+
+### As a background service
+
+```bash
+docker run -d --init --name time-monitor ghcr.io/mattiash/time-monitor
+docker logs -f time-monitor   # stream output
+docker stop time-monitor      # stop cleanly
+```
 
 Sample output:
 
@@ -30,14 +40,14 @@ Timestamp                  Samples           Min           Max           Avg
 Pass a space-separated list of servers via `NTP_SERVERS` (defaults to `pool.ntp.org time.cloudflare.com time.google.com`):
 
 ```bash
-docker run --rm --init -e NTP_SERVERS="pool.ntp.org time.google.com" ghcr.io/mattiash/time-monitor
+docker run --rm --init -it -e NTP_SERVERS="pool.ntp.org time.google.com" ghcr.io/mattiash/time-monitor
 ```
 
 ### Reporting interval and sample rate
 
 ```bash
 # Report every 60s, sample every 5s (12 samples per report)
-docker run --rm --init ghcr.io/mattiash/time-monitor --interval 60 --sample 5
+docker run --rm --init -it ghcr.io/mattiash/time-monitor --interval 60 --sample 5
 ```
 
 | Flag | Default | Description |
