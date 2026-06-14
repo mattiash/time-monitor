@@ -4,6 +4,7 @@
 # ///
 
 import argparse
+import os
 import re
 import signal
 import subprocess
@@ -34,7 +35,12 @@ def format_ms(seconds):
 
 
 def main():
-    signal.signal(signal.SIGTERM, lambda _sig, _frame: sys.exit(0))
+    def _shutdown(signum, frame):
+        print("\nStopped.", flush=True)
+        os._exit(0)
+
+    signal.signal(signal.SIGTERM, _shutdown)
+    signal.signal(signal.SIGINT, _shutdown)
 
     parser = argparse.ArgumentParser(
         description="Report local clock offset via chrony. Samples frequently, reports stats each interval."
