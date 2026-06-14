@@ -5,13 +5,17 @@
 
 import argparse
 import re
+import signal
 import subprocess
 import sys
 import time
 
 
 def read_chrony_offset():
-    result = subprocess.run(["chronyc", "-n", "tracking"], capture_output=True, text=True)
+    try:
+        result = subprocess.run(["chronyc", "-n", "tracking"], capture_output=True, text=True, timeout=5)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("chronyc timed out")
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or "chronyc exited non-zero")
 
@@ -30,6 +34,8 @@ def format_ms(seconds):
 
 
 def main():
+    signal.signal(signal.SIGTERM, lambda _sig, _frame: sys.exit(0))
+
     parser = argparse.ArgumentParser(
         description="Report local clock offset via chrony. Samples frequently, reports stats each interval."
     )
