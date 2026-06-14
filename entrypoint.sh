@@ -38,4 +38,15 @@ until [ -S /run/chrony/chronyd.sock ]; do
     sleep 1
 done
 
-exec python3 /app/ntp_monitor.py "$@"
+python3 /app/ntp_monitor.py "$@" &
+PYTHON_PID=$!
+
+# Kill both children and wait for them on any signal or normal exit
+cleanup() {
+    kill "$PYTHON_PID" "$CHRONY_PID" 2>/dev/null
+    wait
+}
+trap cleanup INT TERM EXIT
+
+# Wait for Python; returns when Python exits or a signal fires the trap
+wait "$PYTHON_PID"
